@@ -38,11 +38,11 @@ type State = {
   useGrouping: boolean;
   funcGroupCol: string;
   target: MyQuery;
-  selectOptions: SelectableValue<string>[];
+  selectOptions: Array<SelectableValue<string>>;
   whereSegments: WhereSegment[];
   selectSegments: SelectSegment[];
   firstWhere: boolean;
-  whereOperators: SelectableValue<string>[];
+  whereOperators: Array<SelectableValue<string>>;
   groupBy: string;
   // useAsyncFunction: boolean;
   // asyncField: string;
@@ -69,8 +69,8 @@ export type Conflation = {
   aggregate: string;
 };
 
-export const conflationUnitDefault: string = 'm';
-export const conflationDurationDefault: string = '5';
+export const conflationUnitDefault = 'm';
+export const conflationDurationDefault = '5';
 export class QueryEditor extends PureComponent<Props, State> {
   uiSegmentSrv: any;
   templateSrv: any;
@@ -186,18 +186,18 @@ export class QueryEditor extends PureComponent<Props, State> {
   onQueryChange(queryType: string) {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, queryType: queryType });
-    if (queryType == 'selectQuery') {
+    if (queryType === 'selectQuery') {
       this.setState({ isQueryError: false, queryErrorMessage: '' });
-    } else if (queryType == 'functionQuery') {
+    } else if (queryType === 'functionQuery') {
       this.functionChanged();
     }
     onRunQuery();
     this.setState({ queryTypeStr: queryType });
-    this.forceUpdate()
+    this.forceUpdate();
   }
   //Function Builder
   functionChanged() {
-    if (this.state.useGrouping === true && (this.state.funcGroupCol == '' || !this.state.funcGroupCol)) {
+    if (this.state.useGrouping === true && (this.state.funcGroupCol === '' || !this.state.funcGroupCol)) {
       this.setState({ isQueryError: true, queryErrorMessage: 'Grouping enabled but no grouping column defined' });
     } else {
       this.setState({ isQueryError: false, queryErrorMessage: '' });
@@ -226,7 +226,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     this.props.datasource.metricFindQueryDefault(metaBuilder.buildDatatypeQuery(target.timeColumn)).then((result) => {
       if (Array.isArray(result)) {
-        if (typeof result[0].t == 'string') {
+        if (typeof result[0].t === 'string') {
           target.timeColumnType = result[0].t;
         }
       }
@@ -381,7 +381,7 @@ export class QueryEditor extends PureComponent<Props, State> {
       .metricFindQueryDefault(query)
       .then((result) => {
         if (Array.isArray(result)) {
-          if (typeof result[0].t == 'string') {
+          if (typeof result[0].t === 'string') {
             return result[0].t;
           }
         }
@@ -438,7 +438,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     return new Promise<Array<SelectableValue<any>>>((resolve) => {
       setTimeout(async () => {
         const response = await datasource
-          .metricFindQueryDefault(metaBuilder.buildColumnQuery(query.format == 'time series' ? 'value' : 'tableValue'))
+          .metricFindQueryDefault(metaBuilder.buildColumnQuery(query.format === 'time series' ? 'value' : 'tableValue'))
           .then(this.transformToSegments({}));
         const result = response.map((option: any) => {
           return { value: option.value, label: option.label };
@@ -449,7 +449,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   transformToSegments(config) {
-    return (results: SelectableValue<string>[]) => {
+    return (results: Array<SelectableValue<string>>) => {
       const segments = _.map(results, (segment) => {
         return {
           label: segment.table ? segment.table : segment.c,
@@ -613,7 +613,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     onChange({ ...query, where: whereParams });
     onRunQuery();
-    if (segments.length == 0) {
+    if (segments.length === 0) {
       this.setState({ whereSegments: segments, firstWhere: true });
     } else {
       this.setState({ whereSegments: segments });
@@ -778,7 +778,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   //   if (this.state.target.useConflation === false) {
   //     this.selectParts.map((partGroup) => {
   //       for (let i = 0; i < partGroup.length; i++) {
-  //         if (partGroup[i].part.type == 'aggregate') partGroup.splice(i, 1);
+  //         if (partGroup[i].part.type === 'aggregate') partGroup.splice(i, 1);
   //       }
   //     });
   //   }
@@ -913,7 +913,7 @@ export class QueryEditor extends PureComponent<Props, State> {
               </div>
             )}
             {/* <div className="gf-form-inline"> */}
-            {this.state.selectSegments.length == 0 && (
+            {this.state.selectSegments.length === 0 && (
               <div className="gf-form-inline">
                 <span className="gf-form-label query-keyword width-10">Select</span>
                 <div className="gf-form-label width-4">
@@ -931,10 +931,10 @@ export class QueryEditor extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
-            {this.state.selectSegments.map((segment) => {
+            {this.state.selectSegments.map((segment, i) => {
               return (
-                <div className="gf-form-inline">
-                  {this.state.selectSegments.indexOf(segment) == 0 && (
+                <div key={i} className="gf-form-inline">
+                  {this.state.selectSegments.indexOf(segment) === 0 && (
                     <div className="gf-form-inline">
                       <span className="gf-form-label query-keyword width-10">Select</span>
                     </div>
@@ -1013,7 +1013,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 </div>
               );
             })}
-            {this.state.whereSegments.length == 0 && (
+            {this.state.whereSegments.length === 0 && (
               <div className="gf-form-inline">
                 <InlineFormLabel
                   className="query-keyword"
@@ -1037,10 +1037,10 @@ export class QueryEditor extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
-            {this.state.whereSegments.map((segment) => {
+            {this.state.whereSegments.map((segment, i) => {
               return (
-                <div className="gf-form-inline">
-                  {this.state.whereSegments.indexOf(segment) == 0 && (
+                <div key={i} className="gf-form-inline">
+                  {this.state.whereSegments.indexOf(segment) === 0 && (
                     <div className="gf-form-inline">
                       <InlineFormLabel
                         className="query-keyword"
@@ -1086,7 +1086,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                       value={segment.value || ''}
                     />
                   </div>
-                  {this.state.whereSegments.indexOf(segment) == this.state.whereSegments.length - 1 && (
+                  {this.state.whereSegments.indexOf(segment) === this.state.whereSegments.length - 1 && (
                     <div className="gf-form-inline">
                       {' '}
                       <Button
@@ -1110,7 +1110,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             {/* </div> */}
           </div>
         )}
-        {this.state.queryTypeStr && this.state.queryTypeStr == 'functionQuery' && (
+        {this.state.queryTypeStr && this.state.queryTypeStr === 'functionQuery' && (
           <div className="gf-form-inline">
             <div className="gf-form" style={{ height: '111px' }}>
               <span className="gf-form-label query-keyword width-10" style={{ height: '111px' }}>
@@ -1132,7 +1132,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         )}
         {this.state.queryTypeStr && this.state.queryTypeStr !== 'kdbSideQuery' && (
           <div>
-            {/* {this.state.queryTypeStr && this.state.queryTypeStr == 'functionQuery' && (
+            {/* {this.state.queryTypeStr && this.state.queryTypeStr === 'functionQuery' && (
               <div>
                 <div className="gf-form-inline">
                   <div className="gf-form">

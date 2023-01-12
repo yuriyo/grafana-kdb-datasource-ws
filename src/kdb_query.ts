@@ -25,17 +25,17 @@ export default class KDBQuery {
     target.funcTimeCol = target.funcTimeCol || '';
     target.where = target.where || [];
 
-    if (typeof target.rowCountLimit == 'undefined') {
+    if (typeof target.rowCountLimit === 'undefined') {
       target.rowCountLimit = defaultRowCountLimit;
     }
 
-    if (typeof target.useGrouping == 'undefined') {
+    if (typeof target.useGrouping === 'undefined') {
       target.useGrouping = false;
     }
 
     if (!target.useConflation) {
       target.useConflation = false;
-      target.conflation;
+      target.conflation = null;
       target.conflationDurationMS = 300 * Math.pow(10, 9);
       target.conflationDefaultAggType = 'avg';
     }
@@ -44,7 +44,7 @@ export default class KDBQuery {
     }
 
     //use Grouping and panel type
-    if (typeof target.useTemporalField == 'undefined') {
+    if (typeof target.useTemporalField === 'undefined') {
       target.useTemporalField = true;
     }
 

@@ -154,7 +154,7 @@ export class KDBMetaQuery {
     let kdbStartDate = new Date(2000, 0, 1, 0, 0).valueOf();
     let fromDate = new Date(DateRange.from._d).valueOf() - 1000 * 3600;
     let toDate = new Date(DateRange.to._d).valueOf() + 1000 * 3600;
-    let convPower = temporalDataType == 'p' ? 6 : 0;
+    let convPower = temporalDataType === 'p' ? 6 : 0;
     let fromKdbNum = (fromDate - kdbStartDate) * Math.pow(10, convPower);
     let toKdbNum = (toDate - kdbStartDate) * Math.pow(10, convPower);
     let query = 'select c:' + column;

@@ -12,13 +12,12 @@ import {
 import ResponseParser from './response_parser';
 import KDBQuery from './kdb_query';
 import { MyQuery, MyDataSourceOptions } from './types';
-import { tabFunction, defaultTimeout, kdbEpoch, durationMap } from './model/kdb-request-config';
+import { tabFunction, defaultTimeout, kdbEpoch, durationMap, graphFunction } from './model/kdb-request-config';
 import { KdbRequest } from './model/kdb-request';
 import { QueryParam } from './model/query-param';
 import { C } from './c';
 import { QueryDictionary } from './model/queryDictionary';
 import { ConflationParams } from './model/conflationParams';
-import { graphFunction } from './model/kdb-request-config';
 import { conflationUnitDefault } from './QueryEditor';
 import _ from 'lodash';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -96,7 +95,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     var prefilterResultCount = options.targets.length;
 
-    if (prefilterResultCount == 0) {
+    if (prefilterResultCount === 0) {
       return new Promise((resolve) => {
         resolve({ data: [] });
       });
@@ -112,7 +111,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       this.injectVariables(options.targets[i], options.scopedVars, options.range);
 
       // for some reason randomWalk is defaulted
-      if (options.targets[i].queryType == 'randomWalk') {
+      if (options.targets[i].queryType === 'randomWalk') {
         options.targets[i].queryType = 'selectQuery';
       }
       allRefIDs.push(options.targets[i].refId);
@@ -130,7 +129,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           refId: options.targets[i].refId,
           errorMessage: options.targets[i].queryError.message[options.targets[i].queryError.error.indexOf(true)],
         });
-      } else validRequestList.push(options.targets[i]);
+      } else {
+        validRequestList.push(options.targets[i]);
+      }
     }
 
     var nrBlankRequests = blankRefIDs.length;
@@ -139,35 +140,37 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     });
 
     var nrRequests: number = requestList.length;
-    if (!this.ws || this.ws.readyState > 1)
+    if (!this.ws || this.ws.readyState > 1) {
       return this.connectWS().then((connectStatus) => {
-        if (connectStatus === true && nrRequests > 0)
+        if (connectStatus === true && nrRequests > 0) {
           return this.sendQueries(nrRequests, requestList, nrBlankRequests, blankRefIDs, errorList).then(
             (series: any) => {
               return this.buildDataFrames(series);
             }
           );
-        else if (connectStatus === true && nrRequests === 0)
+        } else if (connectStatus === true && nrRequests === 0) {
           return this.emptyQueries(nrBlankRequests, blankRefIDs, errorList).then(() => {
             return { data: [] };
           });
-        else
+        } else {
           return this.connectFail(prefilterResultCount, allRefIDs).then(() => {
             return { data: [] };
           });
+        }
       });
-    else {
+    } else {
       return this.webSocketWait().then(() => {
-        if (nrRequests > 0)
+        if (nrRequests > 0) {
           return this.sendQueries(nrRequests, requestList, nrBlankRequests, blankRefIDs, errorList).then(
             (series: any) => {
               return this.buildDataFrames(series);
             }
           );
-        else
+        } else {
           return this.emptyQueries(nrBlankRequests, blankRefIDs, errorList).then(() => {
             return { data: [] };
           });
+        }
       });
     }
   }
@@ -254,8 +257,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       for (let i = 0; i < target.where.length; i++) {
         for (let y = 0; y < target.where[i].params.length; y++) {
           if (Array.isArray(replace) && replace.length > 1) {
-            if (target.where[i].params[y] === search) target.where[i].params[y] = replace;
-          } else if ('string' == typeof target.where[i].params[y]) {
+            if (target.where[i].params[y] === search) {
+              target.where[i].params[y] = replace;
+            }
+          } else if ('string' === typeof target.where[i].params[y]) {
             target.where[i].params[y] = target.where[i].params[y].replace(search, replace);
           }
         }
@@ -266,7 +271,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     target.groupingField = this.fieldInjectVariables(target.groupingField, search, replace);
     target.funcGroupCol = this.fieldInjectVariables(target.funcGroupCol, search, replace);
     //Check row count is formatted correctly
-    if ('string' == typeof target.rowCountLimit) {
+    if ('string' === typeof target.rowCountLimit) {
       if (target.rowCountLimit === search) {
         if (Number.isInteger(Number(replace)) && Number(replace) > 0) {
           target.rowCountLimit = Number(replace);
@@ -277,7 +282,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       }
     }
     //Check conflation params are formatted correctly
-    if ('string' == typeof target.conflationDuration) {
+    if ('string' === typeof target.conflationDuration) {
       if (target.conflationDuration === search) {
         if (isNaN(Number(replace))) {
           target.queryError.error[1] = true;
@@ -321,7 +326,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
       // console.log(varname.length)
       // console.log('vname:',varname)
-      if (scopedVarArray.indexOf(varname) == -1) {
+      if (scopedVarArray.indexOf(varname) === -1) {
         scopedVarArray.push(varname);
         if (instVariables[i].current.text === 'All') {
           // console.log('trig1')
@@ -373,7 +378,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     let conflationParams = new ConflationParams();
 
     //Need to take into account quotes in line, replace " with \"
-    queryDictionary.type = target.queryType == 'selectQuery' ? '`select' : '`function';
+    queryDictionary.type = target.queryType === 'selectQuery' ? '`select' : '`function';
     queryDictionary.value = target.kdbFunction;
 
     queryParam.query = Object.assign({}, queryDictionary);
@@ -384,7 +389,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     queryParam.maxRowCount = target.rowCountLimit;
     // if (target.postbackFunction) queryParam.postbackFunction = target.postbackFunction;
 
-    if (target.queryType == 'selectQuery') queryParam.where = this.buildWhereParams(target.where ? target.where : []);
+    if (target.queryType === 'selectQuery') {
+      queryParam.where = this.buildWhereParams(target.where ? target.where : []);
+    }
     //conflation
     if (target.useConflation) {
       this.buildConflation(target);
@@ -396,9 +403,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     }
 
     //add condition, has grouping been selected?
-    if (target.useGrouping && target.queryType == 'selectQuery' && target.groupingField) {
+    if (target.useGrouping && target.queryType === 'selectQuery' && target.groupingField) {
       queryParam.grouping = ['`' + target.groupingField];
-    } else if (target.useGrouping && target.queryType == 'functionQuery' && target.funcGroupCol) {
+    } else if (target.useGrouping && target.queryType === 'functionQuery' && target.funcGroupCol) {
       queryParam.grouping = ['`' + target.funcGroupCol];
     } else {
       queryParam.grouping = [];
@@ -421,14 +428,14 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       }
     }
 
-    return [target.format == 'time series' ? graphFunction : tabFunction, Object.assign({}, kdbRequest)];
+    return [target.format === 'time series' ? graphFunction : tabFunction, Object.assign({}, kdbRequest)];
   }
 
   //This function
   private buildTemporalField(queryDetails) {
-    if (queryDetails.queryType == 'selectQuery' && queryDetails.timeColumn) {
+    if (queryDetails.queryType === 'selectQuery' && queryDetails.timeColumn) {
       return '`' + queryDetails.timeColumn;
-    } else if (queryDetails.queryType == 'functionQuery' && queryDetails.funcTimeCol) {
+    } else if (queryDetails.queryType === 'functionQuery' && queryDetails.funcTimeCol) {
       return '`' + queryDetails.funcTimeCol;
     } else {
       return [];
@@ -436,7 +443,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   private buildConflation(queryDetails) {
-    if (['s', 'm', 'h', 'ms'].indexOf(queryDetails.conflation.unitType) == -1) {
+    if (['s', 'm', 'h', 'ms'].indexOf(queryDetails.conflation.unitType) === -1) {
       queryDetails.conflationUnit = conflationUnitDefault;
       queryDetails.queryError.error[1] = true;
       queryDetails.queryError.message[1] =
@@ -477,7 +484,7 @@ private buildKdbTimestampString(date : Date) {
     return temporalRange;
   }
 
-  private buildWhereParams(queryWhereList): Array<string> {
+  private buildWhereParams(queryWhereList): string[] {
     let whereArray = [];
     let whereClause = [];
 
@@ -486,24 +493,28 @@ private buildKdbTimestampString(date : Date) {
         let notStatement = false;
         if (clause.params[0] !== 'select field' && clause.params[2] !== 'enter value') {
           whereClause = [];
-          if (clause.params[1].substr(0, 3) == 'not') {
+          if (clause.params[1].substr(0, 3) === 'not') {
             clause.params[1] = clause.params[1].substr(4);
             whereClause.push(clause.params[1]);
             notStatement = true;
-          } else whereClause.push(clause.params[1]);
+          } else {
+            whereClause.push(clause.params[1]);
+          }
           whereClause.push('`' + clause.params[0]);
-          //                    if (clause.datatype == 's') {
-          if (['in', 'within'].indexOf(clause.params[1]) != -1) {
-            if ('string' == typeof clause.params[2]) {
+          //                    if (clause.datatype === 's') {
+          if (['in', 'within'].indexOf(clause.params[1]) !== -1) {
+            if ('string' === typeof clause.params[2]) {
               whereClause.push(clause.params[2].split(',').map((str) => str.trim()));
             } else {
               whereClause.push(clause.params[2]);
             }
-          } else if (clause.params[1] == 'like') {
+          } else if (clause.params[1] === 'like') {
             whereClause.push('"' + clause.params[2] + '"');
-          } else whereClause.push(clause.params[2]);
+          } else {
+            whereClause.push(clause.params[2]);
+          }
           //                    }
-          //                    else if (clause.datatype == 'c') {
+          //                    else if (clause.datatype === 'c') {
           //                        whereClause.push('\"' + clause.params[2] + '\"');
           //                    }
           //                    else {
@@ -514,7 +525,9 @@ private buildKdbTimestampString(date : Date) {
           if (notStatement === true) {
             // console.log('WHERECLAUSE', whereClause)
             whereClause.push('x');
-          } else whereClause.push('o');
+          } else {
+            whereClause.push('o');
+          }
           whereArray.push(whereClause);
         }
       });
@@ -524,7 +537,7 @@ private buildKdbTimestampString(date : Date) {
   } //end of building of where clause
 
   //Builds the list of select functions consisting of the column name and an aggregation function where applicable
-  private buildColumnParams(target): Array<string> {
+  private buildColumnParams(target): string[] {
     let columnArray: any[] = [];
 
     if (target.select) {
@@ -533,7 +546,7 @@ private buildKdbTimestampString(date : Date) {
           let selectElement = [];
           if (target.useConflation) {
             if (select.length !== 1) {
-              if (select[1].type == 'aggregate') {
+              if (select[1].type === 'aggregate') {
                 selectElement.push(select[1].params[0]);
               } else {
                 selectElement.push(target.conflation.aggregate);
@@ -549,12 +562,12 @@ private buildKdbTimestampString(date : Date) {
           //dealing with aliasing
           let alias = '::';
           if (select.length > 1) {
-            if (select[1].type == 'alias') {
+            if (select[1].type === 'alias') {
               alias = select[1].params[0];
             }
           }
-          if (select.length == 3) {
-            if (select[2].type == 'alias') {
+          if (select.length === 3) {
+            if (select[2].type === 'alias') {
               alias = select[2].params[0];
             }
           }
@@ -576,15 +589,16 @@ private buildKdbTimestampString(date : Date) {
   }
 
   showEmpty(Id: string, errormessage?: string) {
+    let returnobj: any;
     if (typeof errormessage === 'undefined') {
-      var returnobj = {
+      returnobj = {
         refId: Id,
         columns: [],
         rows: [],
         meta: { refId: Id, errorReceived: false, errorMessage: '' },
       };
     } else {
-      var returnobj = {
+      returnobj = {
         refId: Id,
         columns: [],
         rows: [],
@@ -599,16 +613,16 @@ private buildKdbTimestampString(date : Date) {
   }
 
   sendQueries(nrRequests, requestList, nrBlankRequests, blankRefIDs, errorList) {
-    var curRequest: number = 0;
+    var curRequest = 0;
     var resultList = [];
 
     return new Promise((resolve) => {
       this.ProcessData(curRequest, nrRequests, resultList, requestList)
         .then(() => {
-          for (var i = 0; i < nrBlankRequests; i++) {
+          for (let i = 0; i < nrBlankRequests; i++) {
             resultList.push(this.showEmpty(blankRefIDs[i]));
           }
-          for (var i = 0; i < errorList.length; i++) {
+          for (let i = 0; i < errorList.length; i++) {
             resultList.push(this.showEmpty(errorList[i].refId, errorList[i].errorMessage));
           }
           resolve({ data: resultList });
@@ -619,7 +633,7 @@ private buildKdbTimestampString(date : Date) {
   connectFail(prefilterResultCount, allRefIDs) {
     return new Promise((resolve) => {
       let serverUnavailableResponse = [];
-      for (var i = 0; i < prefilterResultCount; i++) {
+      for (let i = 0; i < prefilterResultCount; i++) {
         serverUnavailableResponse.push(this.showEmpty(allRefIDs[i], 'KDB+ server unavailable.'));
       }
       resolve({ data: serverUnavailableResponse });
@@ -629,10 +643,10 @@ private buildKdbTimestampString(date : Date) {
   emptyQueries(nrBlankRequests, blankRefIDs, errorList) {
     return new Promise((resolve) => {
       let resultList = [];
-      for (var i = 0; i < nrBlankRequests; i++) {
+      for (let i = 0; i < nrBlankRequests; i++) {
         resultList.push(this.showEmpty(blankRefIDs[i]));
       }
-      for (var i = 0; i < errorList.length; i++) {
+      for (let i = 0; i < errorList.length; i++) {
         resultList.push(this.showEmpty(errorList[i].refId, errorList[i].errorMessage));
       }
       resolve({ data: resultList });
@@ -642,7 +656,7 @@ private buildKdbTimestampString(date : Date) {
   private ProcessData(curRequest, nrRequests, resultList, requestList) {
     return new Promise((resolve) => {
       this.getQueryResult(requestList[curRequest]).then((result) => {
-        var indicies = Object.keys(result);
+        let indicies = Object.keys(result);
         if (result.hasOwnProperty('meta.errorReceived')) {
           resultList.push(result);
         } else {
@@ -651,7 +665,7 @@ private buildKdbTimestampString(date : Date) {
           }
         }
 
-        if (curRequest == nrRequests - 1) {
+        if (curRequest === nrRequests - 1) {
           let returnVal = resultList;
           resolve(returnVal);
         } else {
@@ -673,7 +687,9 @@ private buildKdbTimestampString(date : Date) {
           const processedResult = this.responseParser.processQueryResult(result, curRequest);
           if (Object.keys(result).indexOf('payload') === -1) {
             return resolve([this.showEmpty(curRequest[1].refId, malformedResError)]);
-          } else return resolve(processedResult);
+          } else {
+            return resolve(processedResult);
+          }
         }
       });
     });
@@ -710,7 +726,9 @@ private buildKdbTimestampString(date : Date) {
     return new Promise((ready) => {
       if (this.ws.readyState === 0) {
         setTimeout(() => ready(this.webSocketWait()), 20);
-      } else ready('');
+      } else {
+        ready('');
+      }
     });
   }
 
@@ -749,42 +767,42 @@ private buildKdbTimestampString(date : Date) {
     kdbRequest = this.injectUserVars(kdbRequest);
     return new Promise((resolve, reject) => {
       return this.connectWS().then((connectStatus) => {
-        if (connectStatus === true){
-            resolve(
-              this.executeAsyncQuery(kdbRequest).then((result) => {
-                const values = [];
-                var properties = [];
-                if (Array.isArray(result)) {
-                  if (typeof result[0] === 'string') {
-                    for (let i = 0; i < result.length; i++) {
-                      values.push({ text: result[i] });
-                    }
-                  } else if (typeof result[0] === 'object') {
-                    if (Object.keys(result[0]).length > 1) {
-                      //checking that multiple rows for multiple columns don't come back as the preview tab only shows single values (not objects)
-                      const errorResponse =
-                        'Can only select single values. Attempted to return an object of key-value pairs. Unsafe query';
-                      throw new Error(errorResponse);
-                    }
-                    for (var key in result[0]) {
-                      if (result[0].hasOwnProperty(key) && typeof result[0][key] !== 'function') {
-                        properties.push(key);
-                      }
-                    }
-                    for (let i = 0; i < result.length; i++) {
-                      values.push({ text: result[i][properties[0]] });
+        if (connectStatus === true) {
+          resolve(
+            this.executeAsyncQuery(kdbRequest).then((result) => {
+              const values = [];
+              var properties = [];
+              if (Array.isArray(result)) {
+                if (typeof result[0] === 'string') {
+                  for (let i = 0; i < result.length; i++) {
+                    values.push({ text: result[i] });
+                  }
+                } else if (typeof result[0] === 'object') {
+                  if (Object.keys(result[0]).length > 1) {
+                    //checking that multiple rows for multiple columns don't come back as the preview tab only shows single values (not objects)
+                    const errorResponse =
+                      'Can only select single values. Attempted to return an object of key-value pairs. Unsafe query';
+                    throw new Error(errorResponse);
+                  }
+                  for (var key in result[0]) {
+                    if (result[0].hasOwnProperty(key) && typeof result[0][key] !== 'function') {
+                      properties.push(key);
                     }
                   }
-                } else if (typeof result === 'string') {
-                  const errorResponse = `Check Query. Syntax error with: [ ${result} ]`;
-                  throw new Error(errorResponse);
+                  for (let i = 0; i < result.length; i++) {
+                    values.push({ text: result[i][properties[0]] });
+                  }
                 }
-                return values;
-              })
-            );
-          }else{
-            resolve([]);
-          }
+              } else if (typeof result === 'string') {
+                const errorResponse = `Check Query. Syntax error with: [ ${result} ]`;
+                throw new Error(errorResponse);
+              }
+              return values;
+            })
+          );
+        } else {
+          resolve([]);
+        }
       });
     });
   }
